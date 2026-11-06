@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title th:text="${item.productName + ' | WarrantyWallet'}">Product details</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" th:href="@{/css/app.css}"></head>
+<body><header th:replace="~{fragments :: nav}"></header>
+<main class="container narrow-shell">
+<div th:if="${successMessage}" class="alert alert-success app-alert" th:text="${successMessage}"></div>
+<div th:if="${errorMessage}" class="alert alert-danger app-alert" th:text="${errorMessage}"></div>
+<a class="back-link" th:href="@{/}">← Back to products</a>
+<section class="detail-hero"><div><span class="eyebrow" th:text="${item.category}">Computer</span><h1 th:text="${item.productName}">Laptop</h1><p th:text="${item.brand != null ? item.brand : 'Brand not specified'}">Brand</p></div><span class="status-pill large" th:classappend="${item.statusClass}" th:text="${item.warrantyStatus}">Covered</span></section>
+<section class="detail-grid">
+<div class="detail-card"><span>Purchase date</span><strong th:text="${#temporals.format(item.purchaseDate,'dd MMM yyyy')}">01 Jan 2026</strong></div>
+<div class="detail-card"><span>Warranty duration</span><strong th:text="${item.warrantyMonths + ' months'}">12 months</strong></div>
+<div class="detail-card"><span>Expiry date</span><strong th:text="${#temporals.format(item.expiryDate,'dd MMM yyyy')}">01 Jan 2027</strong></div>
+<div class="detail-card"><span>Time remaining</span><strong th:text="${item.daysRemaining >= 0 ? item.daysRemaining + ' days' : 'Expired ' + (-item.daysRemaining) + ' days ago'}">10 days</strong></div>
+</section>
+<section class="detail-card wide-detail"><div class="section-head"><div><span class="eyebrow">PURCHASE INFORMATION</span><h2>Product details</h2></div></div>
+<dl class="details-list"><div><dt>Serial number</dt><dd th:text="${item.serialNumber != null ? item.serialNumber : 'Not provided'}">Not provided</dd></div>
+<div><dt>Purchased from</dt><dd th:text="${item.storeName != null ? item.storeName : 'Not provided'}">Not provided</dd></div>
+<div><dt>Notes</dt><dd th:text="${item.notes != null ? item.notes : 'No notes'}">No notes</dd></div>
+<div><dt>Receipt</dt><dd th:if="${item.receiptFileName != null}"><a th:href="@{/receipts/{name}(name=${item.receiptFileName})}" target="_blank">View purchase receipt ↗</a></dd><dd th:unless="${item.receiptFileName != null}">No receipt uploaded</dd></div></dl>
+<span th:if="${item.demoData}" class="sample-tag">Sample record</span></section>
+<section class="detail-card wide-detail"><div class="section-head"><div><span class="eyebrow">MAINTENANCE</span><h2>Repair & service history</h2><p>Keep repairs, service visits and costs together.</p></div></div>
+<div class="service-row" th:each="repair : ${repairs}"><div class="service-date" th:text="${#temporals.format(repair.serviceDate,'dd MMM yyyy')}">01 Jan</div><div class="service-copy"><strong th:text="${repair.description}">Annual service</strong><small th:text="${repair.serviceCentre != null ? repair.serviceCentre : 'Service centre not specified'}">Service centre</small><p th:if="${repair.notes != null}" th:text="${repair.notes}">Notes</p></div><strong class="service-cost" th:text="${'₹' + #numbers.formatDecimal(repair.cost,1,2)}">₹0.00</strong></div>
+<div class="empty-inline" th:if="${#lists.isEmpty(repairs)}">No service history recorded yet.</div><hr class="soft-divider">
+<form th:action="@{/warranties/{id}/repairs(id=${item.id})}" th:object="${repairForm}" method="post">
+<h3 class="subheading">Add a service record</h3>
+<div class="row"><div class="col-md-6 mb-3"><label class="form-label" for="serviceDate">Service date</label><input id="serviceDate" class="form-control" type="date" th:field="*{serviceDate}" required><div class="field-error" th:if="${#fields.hasErrors('serviceDate')}" th:errors="*{serviceDate}"></div></div>
+<div class="col-md-6 mb-3"><label class="form-label" for="cost">Cost (₹)</label><input id="cost" class="form-control" type="number" min="0" step="0.01" th:field="*{cost}" placeholder="0.00"><div class="field-error" th:if="${#fields.hasErrors('cost')}" th:errors="*{cost}"></div></div></div>
+<div class="mb-3"><label class="form-label" for="description">What was done?</label><input id="description" class="form-control" th:field="*{description}" placeholder="e.g. Replaced inlet valve" required><div class="field-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div></div>
+<div class="mb-3"><label class="form-label" for="serviceCentre">Service centre</label><input id="serviceCentre" class="form-control" th:field="*{serviceCentre}"></div>
+<div class="mb-3"><label class="form-label" for="repairNotes">Notes</label><textarea id="repairNotes" class="form-control" rows="2" th:field="*{notes}"></textarea></div>
+<button class="btn btn-dark" type="submit">Save service record</button></form></section>
+<div class="danger-zone"><div><strong>Remove this product</strong><p>Its repair history, reminders and uploaded receipt will also be removed.</p></div>
+<form th:action="@{/warranties/{id}/delete(id=${item.id})}" method="post" onsubmit="return confirm('Permanently remove this product and its related records?');"><button class="btn btn-outline-danger btn-sm" type="submit">Delete product</button></form></div>
+</main><footer class="footer"><div class="container">WarrantyWallet</div></footer></body></html>
