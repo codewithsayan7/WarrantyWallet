@@ -6,6 +6,27 @@ WarrantyWallet helps you keep track of the products you buy, their warranty date
 
 ![WarrantyWallet dashboard](docs/images/warrantywallet-dashboard.png)
 
+## Project architecture
+
+The application is organised into a few simple parts:
+
+```mermaid
+flowchart TD
+    A[User / Browser] --> B[Spring Boot Web Controllers]
+    B --> C[Warranty Service]
+    C --> D[Product, Repair and Reminder Repositories]
+    D --> E[(H2 locally / Neon PostgreSQL online)]
+    B --> F[Receipt Storage Service]
+    F --> G[(Receipt files)]
+    H[Daily Reminder Scheduler] --> C
+```
+
+- **Controllers** receive page requests and form submissions.
+- **Warranty Service** handles product, warranty, repair, and reminder operations.
+- **Repositories** read and save records in the database.
+- **Receipt Storage Service** saves and retrieves uploaded receipt files.
+- **Reminder Scheduler** asks the service to create daily warranty reminders.
+
 ## What you can do
 
 - Add products and save their purchase details.
