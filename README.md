@@ -2,6 +2,8 @@
 
 WarrantyWallet helps you keep track of the products you buy, their warranty dates, receipts, and repair history. Everything is organised in one simple household register.
 
+🌐 **[Open the live app](https://warrantywallet-mf61.onrender.com)**
+
 ## Dashboard
 
 ![WarrantyWallet dashboard](docs/images/warrantywallet-dashboard.png)
