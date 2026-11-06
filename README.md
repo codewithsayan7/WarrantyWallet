@@ -2,6 +2,18 @@
 
 A household warranty register built with **Java 21** and **Spring Boot**. Keep product details, purchase receipts, warranty dates, and repair history together in one place.
 
+## Deployment
+
+**Deployment target:** Render (Docker web service)  
+**Database:** Neon PostgreSQL  
+**Build:** Dockerfile using Maven and Eclipse Temurin 21
+
+The Render Docker deployment has completed successfully and the application is configured to connect to Neon PostgreSQL through environment variables.
+
+The Render free instance used for this deployment may spin down after inactivity. As Render notes in the service dashboard, the first request after an idle period can be delayed by 50 seconds or more.
+
+> **Receipt storage note:** Product and repair records are stored in Neon PostgreSQL. Receipt files are saved on the application's local filesystem using `UPLOAD_DIR`. The current free Render instance does not provide durable local file storage, so uploaded receipts may be lost when the service restarts or is redeployed. Use a Render persistent disk or object storage such as Amazon S3 before relying on receipt uploads in production.
+
 ## Dashboard
 
 ![WarrantyWallet dashboard](docs/images/warrantywallet-dashboard.png)
@@ -18,7 +30,7 @@ The dashboard groups saved products by warranty status so it is easy to see what
 - **Repair history:** Record service dates, service centres, repair details, and costs.
 - **In-app reminders:** A daily scheduled task creates reminders for warranties expiring within 30 days and products that expired within the previous 7 days.
 - **Related-record cleanup:** Deleting a product also removes its associated repair and reminder records.
-- **Database options:** Use H2 for local development and PostgreSQL configuration for deployment.
+- **Database options:** Use H2 for local development and Neon PostgreSQL for the hosted deployment.
 
 ## Technology stack
 
@@ -28,7 +40,7 @@ The dashboard groups saved products by warranty status so it is easy to see what
 | Application framework | Spring Boot 3.5.7 |
 | Web layer | Spring MVC, Thymeleaf |
 | Persistence | Spring Data JPA, Hibernate |
-| Databases | H2 (local), PostgreSQL (deployment configuration) |
+| Databases | H2 (local), Neon PostgreSQL (hosted) |
 | Validation | Jakarta Bean Validation |
 | Scheduled tasks | Spring Scheduler |
 | Tests | JUnit 5 |
@@ -61,36 +73,37 @@ The dashboard groups saved products by warranty status so it is easy to see what
 
 You can also use the included `RUN-WINDOWS.bat` file from the project root.
 
+By default, local development uses a file-based H2 database saved as `warrantywalletdb.mv.db`.
+
+## Environment configuration
+
+The hosted service reads configuration from environment variables. Set these in the Render service dashboard, not in source code:
+
+| Variable | Purpose |
+|---|---|
+| `DB_URL` | JDBC URL for Neon PostgreSQL, including SSL options |
+| `DB_USERNAME` | Neon database role |
+| `DB_PASSWORD` | Neon database password |
+| `DB_DRIVER` | `org.postgresql.Driver` |
+| `PORT` | Port supplied/configured by the hosting platform |
+| `UPLOAD_DIR` | Directory used to store uploaded receipts |
+| `REMINDERS_ENABLED` | Enables or disables scheduled in-app reminders |
+
+Never commit database passwords, connection strings containing credentials, or `.env` files.
+
 ## Local data and uploaded receipts
 
 - The local H2 database is stored in `warrantywalletdb.mv.db`.
-- Uploaded receipts are stored under `uploads/receipts/`.
-- These are local runtime data and are excluded from Git by `.gitignore`.
+- Uploaded receipts are stored under `uploads/receipts/` by default.
+- These are runtime data and are excluded from Git by `.gitignore`.
 
-Back up the database and receipt directory before deleting or moving the local project folder.
+Back up the local database and receipt directory before deleting or moving the local project folder.
 
 ## Scheduled reminder behaviour
 
 The scheduler runs every day at **8:00 AM in the server's local timezone**. It creates one in-app reminder per product per day when a warranty is due to expire within the next 30 days or expired within the previous 7 days.
 
 Reminders are displayed inside the application. **Email, SMS, and push notifications are not implemented.** A missed scheduled run is not replayed automatically.
-
-## PostgreSQL deployment configuration
-
-The application supports the following environment variables for a PostgreSQL deployment:
-
-| Variable | Purpose |
-|---|---|
-| `DB_URL` | JDBC connection URL |
-| `DB_USERNAME` | Database username |
-| `DB_PASSWORD` | Database password |
-| `DB_DRIVER` | Set to `org.postgresql.Driver` |
-| `PORT` | Hosting platform's application port |
-| `UPLOAD_DIR` | Directory used to store uploaded receipts |
-
-Configure these values in the hosting provider's environment settings. Do not commit credentials or `.env` files.
-
-**Persistent storage matters:** receipt files are stored on the application filesystem. On hosts with ephemeral filesystems, uploads may disappear when an instance restarts or is replaced. Use a persistent disk or object storage (for example, S3) before relying on receipt uploads in production.
 
 ## Tests
 
@@ -109,14 +122,14 @@ Areas of the codebase worth exploring:
 - Form validation and receipt upload handling.
 - Safe receipt filename generation and protected file retrieval.
 - Scheduled reminder generation and duplicate prevention.
-- H2 local development versus PostgreSQL deployment configuration.
+- H2 local development versus Neon PostgreSQL deployment configuration.
 
 ## Planned improvements
 
 These are possible future enhancements, not current features:
 
 - User accounts and household-level ownership.
-- Cloud receipt storage using S3 or a similar object store.
+- Durable receipt storage using a Render persistent disk or S3-compatible object storage.
 - Email or push notifications.
 - Reminder retry and delivery status.
 - Audit history and expanded integration tests.
